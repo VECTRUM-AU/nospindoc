@@ -18,6 +18,14 @@ exports.handler = async function (event) {
   try {
     const body = JSON.parse(event.body);
 
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: "API key not found in environment" }),
+      };
+    }
+
     const payload = JSON.stringify({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1000,
@@ -43,7 +51,7 @@ exports.handler = async function (event) {
         res.on("data", (chunk) => (raw += chunk));
         res.on("end", () => {
           if (res.statusCode >= 400) {
-            reject(new Error(`Anthropic error ${res.statusCode}: ${raw}`));
+            reject(new Error(`Anthropic ${res.statusCode}: ${raw}`));
           } else {
             resolve(raw);
           }
