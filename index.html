@@ -14,6 +14,7 @@
 <meta name="twitter:title" content="NoSpinDoc — AI-Powered Second Opinion">
 <meta name="twitter:description" content="No spin. No fluff. The honest verdict you actually need.">
 <meta name="description" content="No spin. No fluff. NoSpinDoc gives you the honest AI-powered second opinion you actually need.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1183,8 +1184,8 @@ const CONFIG = {
   // Your Lemon Squeezy checkout link
   checkoutUrl: 'https://nospindoc.lemonsqueezy.com/checkout/buy/d39a6c96-686b-49ec-988f-ceb0ae9c0aa1',
   // Supabase (add when connected)
-  supabaseUrl: 'YOUR_SUPABASE_URL',
-  supabaseKey: 'YOUR_SUPABASE_ANON_KEY',
+  supabaseUrl: 'https://qnijxhuscglaejdhylqt.supabase.co',
+  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuaWp4aHVzY2dsYWVqZGh5bHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyODY2MzgsImV4cCI6MjA5Mzg2MjYzOH0.92bOAFDjn-ThlDkrc3Il1YraxDTPy6r66zbOLBL4ULk',
 };
 // ════════════════════════════════════
 
@@ -1556,15 +1557,46 @@ document.getElementById('modal-signin-link').addEventListener('click', () => {
 });
 
 // ── AUTH MODAL
+// ── SUPABASE INIT
+const supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+
+// ── CHECK SESSION ON LOAD
+async function checkSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await checkPremium();
+  }
+}
+checkSession();
+
+// ── CHECK PREMIUM STATUS
+async function checkPremium() {
+  if (!currentUser) return;
+  const { data } = await supabase
+    .from('profiles')
+    .select('is_premium')
+    .eq('id', currentUser.id)
+    .single();
+  if (data && data.is_premium) {
+    isPremium = true;
+    freeUsed = 0;
+    syncUses();
+  }
+}
+
+// ── AUTH MODAL
 let authMode = 'signup';
+
 function showAuth(mode) {
   authMode = mode || 'signup';
   const isLogin = authMode === 'signin';
-  document.getElementById('auth-title').textContent   = isLogin ? 'Sign in' : 'Create your account';
-  document.getElementById('auth-sub').textContent     = isLogin
-    ? 'Welcome back.' : 'Sign up free. Unlock unlimited checks for $31.99/year.';
+  document.getElementById('auth-title').textContent      = isLogin ? 'Sign in' : 'Create your account';
+  document.getElementById('auth-sub').textContent        = isLogin
+    ? 'Welcome back. Sign in to access your checks.'
+    : 'Sign up free to continue. Unlock unlimited checks for $31.99/year.';
   document.getElementById('auth-submit-btn').textContent = isLogin ? 'Sign in →' : 'Create account →';
-  document.getElementById('auth-switch').innerHTML = isLogin
+  document.getElementById('auth-switch').innerHTML       = isLogin
     ? 'No account? <a id="auth-toggle">Create one</a>'
     : 'Already have an account? <a id="auth-toggle">Sign in instead</a>';
   document.getElementById('auth-toggle').addEventListener('click', () => {
@@ -1573,23 +1605,51 @@ function showAuth(mode) {
   hideErr('err-auth');
   document.getElementById('auth-overlay').classList.add('open');
 }
+
 document.getElementById('auth-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('auth-overlay'))
     document.getElementById('auth-overlay').classList.remove('open');
 });
+
 document.getElementById('auth-submit-btn').addEventListener('click', async () => {
   const email = document.getElementById('auth-email').value.trim();
   const pass  = document.getElementById('auth-pass').value;
   if (!email || !pass) { showErr('err-auth', 'Please enter your email and password.'); return; }
   if (pass.length < 8)  { showErr('err-auth', 'Password must be at least 8 characters.'); return; }
+
   const btn = document.getElementById('auth-submit-btn');
   btn.textContent = '...'; btn.disabled = true;
-  // TODO: wire Supabase auth here
-  setTimeout(() => {
+  hideErr('err-auth');
+
+  try {
+    let result;
+    if (authMode === 'signup') {
+      result = await supabase.auth.signUp({ email, password: pass });
+    } else {
+      result = await supabase.auth.signInWithPassword({ email, password: pass });
+    }
+
+    if (result.error) {
+      showErr('err-auth', result.error.message);
+      btn.disabled = false;
+      btn.textContent = authMode === 'signup' ? 'Create account →' : 'Sign in →';
+      return;
+    }
+
+    currentUser = result.data.user;
+    await checkPremium();
+    document.getElementById('auth-overlay').classList.remove('open');
+
+    if (isPremium) {
+      document.getElementById('paywall-overlay').classList.remove('open');
+    } else {
+      showPaywall();
+    }
+  } catch(e) {
+    showErr('err-auth', 'Something went wrong. Please try again.');
     btn.disabled = false;
     btn.textContent = authMode === 'signup' ? 'Create account →' : 'Sign in →';
-    showErr('err-auth', 'Add your Supabase keys in CONFIG to enable auth.');
-  }, 800);
+  }
 });
 
 // ── UI HELPERS
