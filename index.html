@@ -338,7 +338,7 @@ textarea::placeholder { color: var(--ink4); font-style: italic; }
   margin-top: 1.1rem;
 }
 
-.pill-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+.pill-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; position: relative; z-index: 1; }
 
 .pill {
   padding: 0.3rem 0.8rem;
@@ -353,6 +353,9 @@ textarea::placeholder { color: var(--ink4); font-style: italic; }
   cursor: pointer;
   transition: all 0.12s;
   user-select: none;
+  pointer-events: all;
+  position: relative;
+  z-index: 1;
 }
 .pill:hover { border-color: var(--ink); color: var(--ink); background: var(--paper); }
 .pill.active { background: var(--ink); border-color: var(--ink); color: var(--paper); }
@@ -1182,7 +1185,7 @@ const CONFIG = {
   // Production: change to '/.netlify/functions/ask'
   apiEndpoint: '/.netlify/functions/ask',
   // Your Lemon Squeezy checkout link
-  checkoutUrl: 'https://nospindoc.lemonsqueezy.com/checkout/buy/d39a6c96-686b-49ec-988f-ceb0ae9c0aa1',
+  checkoutUrl: 'https://buy.stripe.com/8x228rgRW7NFeO9e9n6EU05',
   // Supabase (add when connected)
   supabaseUrl: 'https://qnijxhuscglaejdhylqt.supabase.co',
   supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFuaWp4aHVzY2dsYWVqZGh5bHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyODY2MzgsImV4cCI6MjA5Mzg2MjYzOH0.92bOAFDjn-ThlDkrc3Il1YraxDTPy6r66zbOLBL4ULk',
