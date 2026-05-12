@@ -976,6 +976,19 @@ textarea::placeholder { color: var(--ink4); font-style: italic; }
   .form-card-foot { padding: 1rem 1.1rem; }
 }
 </style>
+
+  <!-- Google AdSense — loads only for non-premium users -->
+  <script>
+    window.addEventListener('load', function() {
+      if (!window.__nsd_premium) {
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4851094105645207';
+        s.setAttribute('crossorigin', 'anonymous');
+        document.head.appendChild(s);
+      }
+    });
+  </script>
 </head>
 <body>
 
@@ -1146,6 +1159,7 @@ textarea::placeholder { color: var(--ink4); font-style: italic; }
       </div>
       <ul class="feature-list">
         <li>Unlimited no-spin checks</li>
+                <li>Ad-free experience</li>
         <li>Career, Relationships &amp; Big Purchase categories</li>
         <li>Save &amp; share your verdict cards</li>
         <li>Follow-up questions on any verdict</li>
@@ -1589,6 +1603,7 @@ async function checkPremium() {
     isPremium = true;
     freeUsed = 0;
     syncUses();
+    window.__nsd_premium = true;
   }
 }
 
